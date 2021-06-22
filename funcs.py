@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from datetime import timedelta
+
 
 def apply_adstock(x, L, P, D):
     '''
@@ -205,3 +207,39 @@ def calc_mroas(hill_model, hill_model_params, period=52):
     delta_sp = sum(next_sp * mu_x) - sum(cur_sp * mu_x)
     mroas = delta_mc/delta_sp
     return mroas
+
+# calc overall ROAS of a given period
+def calc_roas(mc_df, ms_df, period=None):
+    print("Calculating ROAS. . .")
+    roas = {}
+    md_names = [col.split('_')[0] for col in ms_df.columns]
+    #print(md_names)
+    for i in range(len(md_names)):
+        md = md_names[i]
+        #print("md: ", md)
+        sp, mc = ms_df[md+"_spnd"], mc_df[md+"_imps"]
+        if period is None:
+            md_roas = mc.sum()/sp.sum()
+        else:
+            md_roas = mc[-period:].sum()/sp[-period:].sum()
+        roas[md] = md_roas
+    return roas
+
+# calc weekly ROAS
+def calc_weekly_roas(mc_df, ms_df):
+    print("Calculating weekly ROAS. . .")
+    weekly_roas = pd.DataFrame()
+    md_names = [col.split('_')[0] for col in ms_df.columns]
+    for md in md_names:
+        #print("md: ", md)
+        weekly_roas[md] = mc_df[md+"_imps"]/ms_df[md+"_spnd"]
+    weekly_roas.replace([np.inf, -np.inf, np.nan], 0, inplace=True)
+    return weekly_roas
+
+def add_week_start(df, date_col):
+    new_df = df.copy()
+    new_df['date'] = pd.to_datetime(new_df[date_col])
+    new_df['weekday'] = new_df['date'].dt.weekday
+    new_df["wk_strt_dt"] = new_df['date'] - new_df['weekday'] * timedelta(days=1)
+    new_df.drop(columns=['date','weekday'], inplace=True)
+    return new_df
