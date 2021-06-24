@@ -1,2 +1,2 @@
-# mixed-media-marketing
-mixed-media-marketing using STAN
+# marketing-mix-modeling
+marketing-mix-modeling using STAN
